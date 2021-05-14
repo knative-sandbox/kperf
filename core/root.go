@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"knative.dev/kperf/pkg/command/eventing"
 	"knative.dev/kperf/pkg/command/service"
 	"knative.dev/kperf/pkg/command/version"
 
@@ -33,7 +34,11 @@ var cfgFile string
 
 func NewPerfCommand(params ...pkg.PerfParams) *cobra.Command {
 	p := &pkg.PerfParams{}
-	p.Initialize()
+	err := p.Initialize()
+	if err != nil {
+		fmt.Printf("kperf initialization failed. (%v)", err)
+		os.Exit(1)
+	}
 
 	rootCmd := &cobra.Command{
 		Use:   "kperf",
@@ -41,6 +46,7 @@ func NewPerfCommand(params ...pkg.PerfParams) *cobra.Command {
 		Long:  `A CLI to help with Knative performance test.`,
 	}
 	cobra.OnInitialize(initConfig)
+	rootCmd.AddCommand(eventing.NewEventingCmd(p))
 	rootCmd.AddCommand(service.NewServiceCmd(p))
 	rootCmd.AddCommand(version.NewVersionCommand())
 	rootCmd.InitDefaultHelpCmd()
